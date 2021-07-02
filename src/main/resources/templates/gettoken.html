@@ -1,0 +1,19 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Sample Application - callback endpoint</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+    <p>
+        <a th:href="@{/}">back</a>
+    </p>
+    <hr />
+    <p>AccessToken=</p>
+    <p th:text="${accessTokenString}"></p>
+    <p>RefreshToken=</p>
+    <p th:text="${refreshTokenString}"></p>
+    <p>IdToken=</p>
+    <p th:text="${IdTokenString}"></p>
+</body>
+</html>

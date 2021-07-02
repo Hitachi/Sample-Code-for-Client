@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Sample Application</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+    <h1>Sample Application</h1>
+    <hr>
+    <div>
+        <p>Token Ops</p>
+        <p>
+            <a th:href="${authorizationUrl}">Get Token</a>
+            <a th:href="@{/refresh}">Refresh Token</a>
+            <a th:href="@{/logout}">Revoke Token</a>
+        </p>
+    </div>
+    <hr>
+    <div>
+        <p>Token Info</p>
+        <table border="1">
+            <tr>
+                <th></th>
+                <th>AccessToken</th>
+                <th>RefreshToken</th>
+            </tr>
+            <tr>
+                <td>Token</td>
+                <td th:text="${accessTokenString}"></td>
+                <td th:text="${refreshTokenString}"></td>
+            </tr>
+            <tr>
+                <td>exp</td>
+                <td th:text="${accessTokenExp}"></td>
+                <td th:text="${refreshTokenExp}"></td>
+            </tr>
+            <tr>
+                <td>scope</td>
+                <td th:text="${accessTokenScope}"></td>
+                <td>---</td>
+            </tr>
+        </table>
+    </div>
+    <hr>
+    <div>
+        <p>API Ops</p>
+        <form th:action="@{/callecho}" method="POST">
+            <input type="submit" value="Call Echo API" />
+        </form>
+        <form th:action="@{/callreadapi}" method="POST">
+            <input type="submit" value="Call ReadData API" />
+        </form>
+        <form th:action="@{/callwriteapi}" method="POST">
+            <input type="submit" value="Call WriteData API" />
+        </form>
+
+
+
+ 	</form>
+        
+        
+        <p>API Response =</p>
+        <p th:text="${apiResponse}"></p>
+    </div>
+    <hr>
+</body>
+</html>
