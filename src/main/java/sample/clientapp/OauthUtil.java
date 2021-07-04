@@ -77,10 +77,9 @@ public class OauthUtil {
 
         return Base64.getDecoder().decode(encodedContent);
     }
-    
+
     public static String encodeToBasicClientCredential(String clientId, String clientSecret) {
         String clientcredential = clientId + ":" + clientSecret;
         return Base64.getEncoder().encodeToString(clientcredential.getBytes());
     }
-    
 }

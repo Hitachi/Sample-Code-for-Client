@@ -16,16 +16,12 @@ import org.springframework.web.client.RestTemplate;
 @Component
 @ConfigurationProperties(prefix = "server.ssl")
 public class SslConfiguration {
-	
 
-	
     private Resource keyStore;
     private String keyStorePassword;
     private String keyPassword;
     private Resource trustStore;
     private String trustStorePassword;
-	
-
 
     public Resource getKeyStore() {
         return keyStore;
@@ -70,17 +66,16 @@ public class SslConfiguration {
     @Bean
     RestTemplate restTemplate(RestTemplateBuilder builder) throws Exception {
 
-    	if (keyStore == null){ // Disable SSL
-	        RestTemplateBuilder RestTemplateBuilder = new RestTemplateBuilder();
-    	    return RestTemplateBuilder.build();
-    	    
-    	} else { // Enable SSL
-    		SSLContext sslContext = SSLContextBuilder.create()
+        if (keyStore == null){ // Disable SSL
+            RestTemplateBuilder RestTemplateBuilder = new RestTemplateBuilder();
+            return RestTemplateBuilder.build();
+            
+        } else { // Enable SSL
+            SSLContext sslContext = SSLContextBuilder.create()
             .loadKeyMaterial(keyStore.getURL(), keyStorePassword.toCharArray(), keyPassword.toCharArray())
             .loadTrustMaterial(trustStore.getURL(), trustStorePassword.toCharArray(), null).build();
-    		HttpClient httpClient = HttpClients.custom().setSSLContext(sslContext).build();
-    		return builder.requestFactory(() -> new HttpComponentsClientHttpRequestFactory(httpClient)).build();
-    	}
+            HttpClient httpClient = HttpClients.custom().setSSLContext(sslContext).build();
+            return builder.requestFactory(() -> new HttpComponentsClientHttpRequestFactory(httpClient)).build();
+        }
     }
-
 }

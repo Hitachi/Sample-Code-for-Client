@@ -11,9 +11,6 @@ public class OauthConfiguration {
     private boolean pkce;
     private boolean formPost;
 
-	
-
-	
     public boolean isState() {
         return state;
     }

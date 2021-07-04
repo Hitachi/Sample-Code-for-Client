@@ -38,8 +38,7 @@ public class TokenResponse {
     public void setRefreshExpiresIn(int refreshExpiresIn) {
         this.refreshExpiresIn = refreshExpiresIn;
     }
-    
-    
+
     public String getRefreshToken() {
         return refreshToken;
     }
@@ -87,5 +86,4 @@ public class TokenResponse {
     public void setNotBeforePolicy(int notBeforePolicy) {
         this.notBeforePolicy=notBeforePolicy;
     }
-    
 }
