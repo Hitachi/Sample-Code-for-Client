@@ -1,19 +1,40 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
-<title>Sample Application - callback endpoint</title>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Sample Application - callback endpoint</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+        integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
 </head>
+
 <body>
-    <p>
+    <div class="container">
         <a th:href="@{/}">back</a>
-    </p>
-    <hr />
-    <p>AccessToken=</p>
-    <p th:text="${accessTokenString}"></p>
-    <p>RefreshToken=</p>
-    <p th:text="${refreshTokenString}"></p>
-    <p>IdToken=</p>
-    <p th:text="${IdTokenString}"></p>
+
+        <hr />
+        <div class="container">
+            <p class="h3">Tokens</p>
+            <p class="h4">AccessToken</p>
+            <pre class="text-break text-wrap" th:text="${accessTokenString}"></pre>
+            <p class="h4">RefreshToken</p>
+            <pre class="text-break text-wrap" th:text="${refreshTokenString}"></pre>
+            <p class="h4">IDToken</p>
+            <pre class="text-break text-wrap" th:text="${IdTokenString}"></pre>
+        </div>
+        <div class="container">
+
+            <p class="h3">Decoded Tokens</p>
+            <p class="h4">Access Token</p>
+            <pre class="border" th:text="${decodedAccessTokenString}"></pre>
+            <p class="h4">Refresh Token</p>
+            <pre class="border" th:text="${decodedRefreshTokenString}"></pre>
+            <p class="h4">IDToken</p>
+            <pre class="border" th:text="${decodedIDTokenString}"></pre>
+        </div>
+
+    </div>
 </body>
+
 </html>

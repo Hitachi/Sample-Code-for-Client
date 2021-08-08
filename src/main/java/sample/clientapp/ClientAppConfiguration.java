@@ -6,24 +6,16 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "clientapp.config")
 public class ClientAppConfiguration {
-    private String authserverUrl;
     private String apiserverUrl;
     private String clientappUrl;
     private String authorizationEndpoint;
     private String tokenEndpoint;
-    private String logoutEndpoint;
     private String revokeEndpoint;
     private String clientId;
     private String clientSecret;
     private String scope;
 
-    public String getAuthserverUrl() {
-        return authserverUrl;
-    }
 
-    public void setAuthserverUrl(String value) {
-        authserverUrl = value;
-    }
 
     public String getApiserverUrl() {
         return apiserverUrl;
@@ -57,13 +49,7 @@ public class ClientAppConfiguration {
         this.tokenEndpoint = tokenEndpoint;
     }
     
-    public String getLogoutEndpoint() {
-        return logoutEndpoint;
-    }
 
-    public void setLogoutEndpoint(String logoutEndpoint) {
-        this.logoutEndpoint = logoutEndpoint;
-    }
 
     public String getRevokeEndpoint() {
         return revokeEndpoint;
@@ -88,7 +74,7 @@ public class ClientAppConfiguration {
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
     }
-
+    
     public String getScope() {
         return scope;
     }

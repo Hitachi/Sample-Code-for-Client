@@ -50,6 +50,17 @@ public class OauthUtil {
         return readValue;
     }
 
+    public static String writeJsonString(Object obj) {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        try {
+            return mapper.writeValueAsString(obj);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
     public static String encodeToBase64Url(byte[] octets) {
         String encoded = Base64.getEncoder().encodeToString(octets);
         encoded = encoded.split("=")[0];
