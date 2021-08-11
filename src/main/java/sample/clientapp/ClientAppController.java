@@ -375,8 +375,8 @@ public class ClientAppController {
 
         revokeToken((String) session.getAttribute("refreshToken"));
 
-        session.setAttribute("accessToken", null);
-        session.setAttribute("refreshToken", null);
+//        session.setAttribute("accessToken", null);
+//        session.setAttribute("refreshToken", null);
 
         return "forward:/";
     }
