@@ -1,13 +1,21 @@
 package sample.clientapp;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.http.HttpSession;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -28,6 +36,7 @@ import org.springframework.web.client.RestTemplate;
 @Controller
 public class ClientAppController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ClientAppController.class);
     @Autowired
     HttpSession session;
 
@@ -87,16 +96,15 @@ public class ClientAppController {
         return authorizationUrl.toString();
     }
 
-    private void printRequest(String msg, RequestEntity req) {
-
-        System.out.println(msg);
-        System.out.println(req.getMethod().toString());
-        System.out.println(req.getUrl().toString());
-        System.out.println(" - Headers:\n" + req.getHeaders().toString());
-        if (req.hasBody())
-            System.out.println(" - Body:\n" + req.getBody().toString() + "\n");
-        else
-            System.out.println("\n");
+    private void printRequest(String msg, RequestEntity<?> req) {
+        Map<String, Object> message = new HashMap<>();
+        message.put("method", req.getMethod().toString());
+        message.put("url", req.getUrl().toString());
+        message.put("headers", req.getHeaders());
+        if (req.hasBody()) {
+            message.put("body", req.getBody());
+        }
+        logger.debug("ReqeustType=\"" + msg + "\" RequestInfo=" + writeJsonString(req, false));
         return;
     }
 
@@ -121,15 +129,14 @@ public class ClientAppController {
         RequestEntity<?> req = new RequestEntity<>(params, headers, HttpMethod.POST, URI.create(tokenRequestUrl.toString()));
         TokenResponse token = null;
         try {
-            printRequest("* Token Request:", req);
+            printRequest("Token Request", req);
 
             ResponseEntity<TokenResponse> res = restTemplate.exchange(req, TokenResponse.class);
             token = res.getBody();
-            printTokenResponse(res, token);
+            printResponse("Token Response", res);
 
         } catch (HttpClientErrorException e) {
-            System.out.println("!! response code=" + e.getStatusCode() + "\n");
-            System.out.println(e.getResponseBodyAsString() + "\n");
+            printClientError("Token Response", e);
         }
 
         return token;
@@ -142,16 +149,14 @@ public class ClientAppController {
         }
 
         RequestEntity<?> req = new RequestEntity<>(headers, HttpMethod.GET, URI.create(url));
-        // System.out.println("Called API:"+ req.toString()+"\n");
-        printRequest("Called API:", req);
+        printRequest("Call API", req);
         String response = null;
         try {
             ResponseEntity<String> res = restTemplate.exchange(req, String.class);
             response = res.getBody();
-            // System.out.println(response.toString()+"\n");
+            printResponse("Call API", res);
         } catch (HttpClientErrorException e) {
-            System.out.println("!! response code=" + e.getStatusCode() + "\n");
-            System.out.println(e.getResponseBodyAsString() + "\n");
+            printClientError("Call API", e);
             response = e.getStatusCode().toString();
         }
 
@@ -191,7 +196,7 @@ public class ClientAppController {
     public String auth(@RequestParam("scope") String scope) {
         session.setAttribute("scope", scope);
         String authUrl = getAuthorizationUrl(scope);
-        System.out.println("* Authorization request:\n" + "HTTP/1.1 302\n" + "Location: " + authUrl + "\n");
+        logger.debug("Type=\"Authorization Request\" Status=\"302\" Location=\"" + authUrl + "\"");
         return String.format("redirect:%s", authUrl);
     }
 
@@ -230,10 +235,10 @@ public class ClientAppController {
         if (oauthConfig.isState()) {
             if (state == null || !state.equals(session.getAttribute("state"))) {
                 // state check failure. Write error handling here.
-                System.out.println("state check NG\n");
+                logger.error("state check NG");
                 return "gettoken";
             } else {
-                System.out.println("state check OK\n");
+                logger.debug("state check OK");
                 session.setAttribute("state", "");
             }
         }
@@ -248,10 +253,10 @@ public class ClientAppController {
             IdToken idToken = OauthUtil.readJsonContent(OauthUtil.decodeFromBase64Url(token.getIdToken()), IdToken.class);
             if (idToken.getNonce() == null || !idToken.getNonce().equals(session.getAttribute("nonce"))) {
                 // nonce check failure. Write error handling here.
-                System.out.println("nonce check NG\n");
+                logger.error("nonce check NG\n");
                 return "gettoken";
             } else {
-                System.out.println("nonce check OK\n");
+                logger.debug("nonce check OK\n");
                 session.setAttribute("nonce", "");
             }
         }
@@ -278,21 +283,33 @@ public class ClientAppController {
         return OauthUtil.writeJsonString(obj);
     }
 
-    private void printTokenResponse(ResponseEntity res, TokenResponse token) {
-        System.out.println("* Response:");
-        System.out.println("-Status:" + res.getStatusCode().toString());
-        System.out.println("-Headers:" + res.getHeaders().toString());
-        System.out.println("-Body:");
-        System.out.println("access_token," + "\"" + token.getAccessToken() + "\"");
-        System.out.println("expires_in," + token.getExpiresIn());
-        System.out.println("refresh_token," + "\"" + token.getRefreshToken() + "\"");
-        System.out.println("refresh_expires_in," + token.getRefreshExpiresIn());
-        System.out.println("id_token," + "\"" + token.getIdToken() + "\"");
-        System.out.println("token_type," + token.getTokenType());
-        System.out.println("not_before_policy," + "\"" + token.getNotBeforePolicy() + "\"");
-        System.out.println("session_state," + "\"" + token.getSessionState() + "\"");
-        System.out.println("scope," + "\"" + token.getScope() + "\"");
-        System.out.flush();
+    private void printResponse(String responseType, ResponseEntity<?> resp) {
+        Map<String, Object> message = new HashMap<>();
+        message.put("status", resp.getStatusCode().toString());
+        message.put("headers", resp.getHeaders());
+        message.put("body", resp.getBody());
+        logger.debug("ResponseType=\"" + responseType + "\" ResponseInfo=" + writeJsonString(message, false));
+        return;
+    }
+
+    private void printClientError(String errorType, HttpClientErrorException e) {
+        Map<String, Object> message = new HashMap<>();
+        message.put("status", e.getStatusCode().toString());
+        message.put("headers", e.getResponseHeaders());
+        message.put("body", e.getResponseBodyAsString());
+        logger.error("ErrorType=\"" + errorType + "\" ResponseInfo=" + writeJsonString(message, false));
+
+    }
+
+    private String writeJsonString(Object obj, boolean indent) {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
+        try {
+            return mapper.writeValueAsString(obj);
+        } catch (IOException e) {
+            logger.error("unable to deserialize", e);
+        }
+        return "";
     }
 
     private TokenResponse refreshToken(String refreshToken) {
@@ -310,15 +327,14 @@ public class ClientAppController {
 
         RequestEntity<?> req = new RequestEntity<>(params, headers, HttpMethod.POST, URI.create(tokenRequestUrl.toString()));
         TokenResponse token = null;
-        printRequest("*Refresh Request", req);
+        printRequest("Refresh Request", req);
 
         try {
             ResponseEntity<TokenResponse> res = restTemplate.exchange(req, TokenResponse.class);
             token = res.getBody();
-            printTokenResponse(res, token);
+            printResponse("Refresh Response", res);
         } catch (HttpClientErrorException e) {
-            System.out.println("!! response code=" + e.getStatusCode() + "\n");
-            System.out.println(e.getResponseBodyAsString() + "\n");
+            printClientError("Refresh Response", e);
         }
 
         return token;
@@ -339,13 +355,13 @@ public class ClientAppController {
 
         RequestEntity<?> req = new RequestEntity<>(params, headers, HttpMethod.POST, URI.create(revokeUrl.toString()));
 
-        printRequest("*Revoke Request:", req);
+        printRequest("Revoke Request", req);
 
         try {
             restTemplate.exchange(req, Object.class);
         } catch (HttpClientErrorException e) {
-            System.out.println("!! response code=" + e.getStatusCode() + "\n");
-            System.out.println(e.getResponseBodyAsString() + "\n");
+            printClientError("Revoke Response", e);
+
         }
     }
 
