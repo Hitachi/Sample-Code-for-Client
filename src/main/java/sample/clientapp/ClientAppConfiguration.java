@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "clientapp.config")
 public class ClientAppConfiguration {
     private String apiserverUrl;
-    private String clientappUrl;
     private String authorizationEndpoint;
     private String tokenEndpoint;
     private String revokeEndpoint;
@@ -21,14 +20,6 @@ public class ClientAppConfiguration {
 
     public void setApiserverUrl(String value) {
         apiserverUrl = value;
-    }
-
-    public String getClientappUrl() {
-        return clientappUrl;
-    }
-
-    public void setClientappUrl(String value) {
-        clientappUrl = value;
     }
 
     public String getAuthorizationEndpoint() {

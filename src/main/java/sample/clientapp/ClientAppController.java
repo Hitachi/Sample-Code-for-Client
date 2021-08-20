@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Controller
 public class ClientAppController {
@@ -55,7 +56,7 @@ public class ClientAppController {
 
         String redirectUrl;
         try {
-            redirectUrl = URLEncoder.encode(clientConfig.getClientappUrl() + "/gettoken", "UTF-8");
+            redirectUrl = URLEncoder.encode(generateRedirectUri(), "UTF-8");
             if (scope != null && !scope.isEmpty())
                 scope = URLEncoder.encode(scope, "UTF-8");
         } catch (UnsupportedEncodingException e) {
@@ -120,7 +121,7 @@ public class ClientAppController {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
         params.add("code", authorizationCode);
         params.add("grant_type", "authorization_code");
-        params.add("redirect_uri", clientConfig.getClientappUrl() + "/gettoken");
+        params.add("redirect_uri", generateRedirectUri());
 
         if (oauthConfig.isPkce()) {
             params.add("code_verifier", (String) session.getAttribute("codeVerifier"));
@@ -140,6 +141,12 @@ public class ClientAppController {
         }
 
         return token;
+    }
+
+    private String generateRedirectUri() {
+        String redirectUri = ServletUriComponentsBuilder.fromCurrentRequest().replacePath("/gettoken").replaceQuery(null)
+                .toUriString();
+        return redirectUri;
     }
 
     private String callApi(String url, String accessToken) {
