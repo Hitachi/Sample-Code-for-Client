@@ -15,8 +15,6 @@ public class ClientAppConfiguration {
     private String clientSecret;
     private String scope;
 
-
-
     public String getApiserverUrl() {
         return apiserverUrl;
     }
@@ -48,8 +46,6 @@ public class ClientAppConfiguration {
     public void setTokenEndpoint(String tokenEndpoint) {
         this.tokenEndpoint = tokenEndpoint;
     }
-    
-
 
     public String getRevokeEndpoint() {
         return revokeEndpoint;
@@ -58,7 +54,7 @@ public class ClientAppConfiguration {
     public void setRevokeEndpoint(String value) {
         revokeEndpoint = value;
     }
-    
+
     public String getClientId() {
         return clientId;
     }
@@ -74,7 +70,7 @@ public class ClientAppConfiguration {
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
     }
-    
+
     public String getScope() {
         return scope;
     }

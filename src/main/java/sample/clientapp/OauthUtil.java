@@ -55,7 +55,7 @@ public class OauthUtil {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         try {
             return mapper.writeValueAsString(obj);
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return "";

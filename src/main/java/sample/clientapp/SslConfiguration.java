@@ -66,14 +66,14 @@ public class SslConfiguration {
     @Bean
     RestTemplate restTemplate(RestTemplateBuilder builder) throws Exception {
 
-        if (keyStore == null){ // Disable SSL
+        if (keyStore == null) { // Disable SSL
             RestTemplateBuilder RestTemplateBuilder = new RestTemplateBuilder();
             return RestTemplateBuilder.build();
-            
+
         } else { // Enable SSL
             SSLContext sslContext = SSLContextBuilder.create()
-            .loadKeyMaterial(keyStore.getURL(), keyStorePassword.toCharArray(), keyPassword.toCharArray())
-            .loadTrustMaterial(trustStore.getURL(), trustStorePassword.toCharArray(), null).build();
+                    .loadKeyMaterial(keyStore.getURL(), keyStorePassword.toCharArray(), keyPassword.toCharArray())
+                    .loadTrustMaterial(trustStore.getURL(), trustStorePassword.toCharArray(), null).build();
             HttpClient httpClient = HttpClients.custom().setSSLContext(sslContext).build();
             return builder.requestFactory(() -> new HttpComponentsClientHttpRequestFactory(httpClient)).build();
         }

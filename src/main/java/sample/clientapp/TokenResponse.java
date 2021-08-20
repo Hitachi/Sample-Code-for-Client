@@ -54,7 +54,7 @@ public class TokenResponse {
     public void setIdToken(String idToken) {
         this.idToken = idToken;
     }
-    
+
     public String getTokenType() {
         return tokenType;
     }
@@ -62,7 +62,7 @@ public class TokenResponse {
     public void setTokenType(String tokenType) {
         this.tokenType = tokenType;
     }
-    
+
     public String getSessionState() {
         return sessionState;
     }
@@ -78,12 +78,12 @@ public class TokenResponse {
     public void setScope(String scope) {
         this.scope = scope;
     }
-    
+
     public int getNotBeforePolicy() {
         return notBeforePolicy;
     }
 
     public void setNotBeforePolicy(int notBeforePolicy) {
-        this.notBeforePolicy=notBeforePolicy;
+        this.notBeforePolicy = notBeforePolicy;
     }
 }
