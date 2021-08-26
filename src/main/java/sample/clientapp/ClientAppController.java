@@ -105,7 +105,7 @@ public class ClientAppController {
         if (req.hasBody()) {
             message.put("body", req.getBody());
         }
-        logger.debug("ReqeustType=\"" + msg + "\" RequestInfo=" + writeJsonString(req, false));
+        logger.debug("ReqeustType=\"" + msg + "\" RequestInfo=" + writeJsonString(message, false));
         return;
     }
 
