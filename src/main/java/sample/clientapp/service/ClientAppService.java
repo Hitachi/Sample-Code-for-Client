@@ -18,7 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -27,8 +28,10 @@ import sample.clientapp.ClientSession;
 import sample.clientapp.TokenResponse;
 import sample.clientapp.config.ClientAppConfiguration;
 import sample.clientapp.config.OauthConfiguration;
+import sample.clientapp.jwt.AccessToken;
 import sample.clientapp.jwt.IdToken;
 import sample.clientapp.jwt.JsonWebToken;
+import sample.clientapp.jwt.RefreshToken;
 import sample.clientapp.util.JsonUtil;
 import sample.clientapp.util.OauthUtil;
 
@@ -59,7 +62,7 @@ public class ClientAppService {
         params.add("client_id", clientConfig.getClientId());
 
         if (scope != null && !scope.isEmpty()) {
-            params.add("scope", scope);
+            params.add("scope", URLEncoder.encode(scope, Charset.defaultCharset()));
         }
 
         if (oauthConfig.isState()) {
@@ -86,7 +89,7 @@ public class ClientAppService {
             params.add("response_mode", "form_post");
         }
 
-        return authorizationUrl.queryParams(params).toUriString();
+        return authorizationUrl.queryParams(params).build(true).toUriString();
     }
 
     public TokenResponse requestToken(String authorizationCode) {
@@ -116,20 +119,23 @@ public class ClientAppService {
             token = res.getBody();
             printResponse("Token Response", res);
 
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             printClientError("Token Response", e);
+            return TokenResponse.withError(e.getMessage(), e.getResponseBodyAsString());
+        } catch (ResourceAccessException e) {
+            return TokenResponse.withError(e.getMessage(), null);
         }
 
         return token;
     }
 
-    public String processAuthorizationCodeGrant(String code, String state) {
+    public TokenResponse processAuthorizationCodeGrant(String code, String state) {
         // check state before token request
         if (oauthConfig.isState()) {
             if (state == null || !state.equals(clientSession.getState())) {
                 // state check failure. Write error handling here.
                 logger.error("state check NG");
-                return "gettoken";
+                return TokenResponse.withError("state check NG", null);
             } else {
                 logger.debug("state check OK");
                 clientSession.setState(null);
@@ -137,8 +143,8 @@ public class ClientAppService {
         }
 
         TokenResponse token = requestToken(code);
-        if (token == null) {
-            return "gettoken";
+        if (token.getError() != null) {
+            return token;
         }
 
         // check nonce after ID token is obtained
@@ -147,19 +153,17 @@ public class ClientAppService {
             if (idToken.getNonce() == null || !idToken.getNonce().equals(clientSession.getNonce())) {
                 // nonce check failure. Write error handling here.
                 logger.error("nonce check NG\n");
-                return "gettoken";
+                return TokenResponse.withError("nonce check NG", null);
             } else {
                 logger.debug("nonce check OK\n");
                 clientSession.setNonce(null);
             }
         }
 
-        clientSession.setTokensFromTokenResponse(token);
-
-        return "gettoken";
+        return token;
     }
 
-    public TokenResponse refreshToken(String refreshToken) {
+    public TokenResponse refreshToken(RefreshToken refreshToken) {
         StringBuilder tokenRequestUrl = new StringBuilder();
         tokenRequestUrl.append(clientConfig.getTokenEndpoint());
 
@@ -169,8 +173,9 @@ public class ClientAppService {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
         params.add("grant_type", "refresh_token");
-        params.add("refresh_token", refreshToken);
-
+        if (refreshToken != null) {
+            params.add("refresh_token", refreshToken.getTokenString());
+        }
         RequestEntity<?> req = new RequestEntity<>(params, headers, HttpMethod.POST, URI.create(tokenRequestUrl.toString()));
         TokenResponse token = null;
         printRequest("Refresh Request", req);
@@ -179,14 +184,17 @@ public class ClientAppService {
             ResponseEntity<TokenResponse> res = restTemplate.exchange(req, TokenResponse.class);
             token = res.getBody();
             printResponse("Refresh Response", res);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             printClientError("Refresh Response", e);
+            return TokenResponse.withError(e.getMessage(), e.getResponseBodyAsString());
+        } catch (ResourceAccessException e) {
+            return TokenResponse.withError(e.getMessage(), null);
         }
 
         return token;
     }
 
-    public void revokeToken(String refreshToken) {
+    public void revokeToken(RefreshToken refreshToken) {
         StringBuilder revokeUrl = new StringBuilder();
         revokeUrl.append(clientConfig.getRevokeEndpoint());
 
@@ -195,25 +203,28 @@ public class ClientAppService {
         headers.setBasicAuth(clientConfig.getClientId(), clientConfig.getClientSecret());
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
-        params.add("token", refreshToken);
-        params.add("token_type_hint", "refresh_token");
-
+        if (refreshToken != null) {
+            params.add("token", refreshToken.getTokenString());
+            params.add("token_type_hint", "refresh_token");
+        }
         RequestEntity<?> req = new RequestEntity<>(params, headers, HttpMethod.POST, URI.create(revokeUrl.toString()));
 
         printRequest("Revoke Request", req);
 
         try {
             restTemplate.exchange(req, Object.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             printClientError("Revoke Response", e);
 
+        } catch (ResourceAccessException e) {
+            logger.error(e.getMessage(), e);
         }
     }
 
-    public String callApi(String url, String accessToken) {
+    public String callApi(String url, AccessToken accessToken) {
         HttpHeaders headers = new HttpHeaders();
         if (accessToken != null) {
-            headers.setBearerAuth(accessToken);
+            headers.setBearerAuth(accessToken.getTokenString());
         }
 
         RequestEntity<?> req = new RequestEntity<>(headers, HttpMethod.GET, URI.create(url));
@@ -223,9 +234,11 @@ public class ClientAppService {
             ResponseEntity<String> res = restTemplate.exchange(req, String.class);
             response = res.getBody();
             printResponse("Call API", res);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             printClientError("Call API", e);
             response = e.getStatusCode().toString();
+        } catch (ResourceAccessException e) {
+            response = e.getMessage();
         }
 
         return response;
@@ -258,7 +271,7 @@ public class ClientAppService {
         return;
     }
 
-    private void printClientError(String errorType, HttpClientErrorException e) {
+    private void printClientError(String errorType, HttpStatusCodeException e) {
         Map<String, Object> message = new HashMap<>();
         message.put("status", e.getStatusCode().toString());
         message.put("headers", e.getResponseHeaders());

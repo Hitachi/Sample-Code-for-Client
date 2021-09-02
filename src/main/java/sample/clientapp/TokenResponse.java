@@ -14,6 +14,15 @@ public class TokenResponse {
     private int notBeforePolicy;
     private String sessionState;
     private String scope;
+    private String error;
+    private String errorDescription;
+
+    public static TokenResponse withError(String error, String description) {
+        TokenResponse response = new TokenResponse();
+        response.error = error;
+        response.errorDescription = description;
+        return response;
+    }
 
     public String getAccessToken() {
         return accessToken;
@@ -86,4 +95,21 @@ public class TokenResponse {
     public void setNotBeforePolicy(int notBeforePolicy) {
         this.notBeforePolicy = notBeforePolicy;
     }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    public String getErrorDescription() {
+        return errorDescription;
+    }
+
+    public void setErrorDescription(String errorDescription) {
+        this.errorDescription = errorDescription;
+    }
+
 }
