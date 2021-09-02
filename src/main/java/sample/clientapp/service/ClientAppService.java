@@ -1,8 +1,8 @@
 package sample.clientapp.service;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +21,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import sample.clientapp.ClientSession;
 import sample.clientapp.TokenResponse;
@@ -49,50 +50,43 @@ public class ClientAppService {
     ClientSession clientSession;
 
     public String getAuthorizationUrl(String scope) {
-        StringBuilder authorizationUrl = new StringBuilder();
-        authorizationUrl.append(clientConfig.getAuthorizationEndpoint());
+        UriComponentsBuilder authorizationUrl = UriComponentsBuilder.fromUriString(clientConfig.getAuthorizationEndpoint());
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 
-        String redirectUrl;
-        try {
-            redirectUrl = URLEncoder.encode(generateRedirectUri(), "UTF-8");
-            if (scope != null && !scope.isEmpty())
-                scope = URLEncoder.encode(scope, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return "";
-        }
+        String redirectUrl = URLEncoder.encode(generateRedirectUri(), Charset.defaultCharset());
+        params.add("redirect_uri", redirectUrl);
+        params.add("response_type", "code");
+        params.add("client_id", clientConfig.getClientId());
 
         if (scope != null && !scope.isEmpty()) {
-            authorizationUrl.append("?response_type=code").append("&client_id=").append(clientConfig.getClientId())
-                    .append("&redirect_uri=").append(redirectUrl).append("&scope=").append(scope);
-        } else {
-            authorizationUrl.append("?response_type=code").append("&client_id=").append(clientConfig.getClientId())
-                    .append("&redirect_uri=").append(redirectUrl);
+            params.add("scope", scope);
         }
 
         if (oauthConfig.isState()) {
             String state = UUID.randomUUID().toString();
             clientSession.setState(state);
-            authorizationUrl.append("&state=").append(state);
+            params.add("state", state);
         }
 
         if (oauthConfig.isNonce()) {
             String nonce = UUID.randomUUID().toString();
             clientSession.setNonce(nonce);
-            authorizationUrl.append("&nonce=").append(nonce);
+            params.add("nonce", nonce);
         }
 
         if (oauthConfig.isPkce()) {
             String codeVerifier = OauthUtil.generateCodeVerifier();
             String codeChallenge = OauthUtil.generateCodeChallenge(codeVerifier);
-            authorizationUrl.append("&code_challenge_method=S256&code_challenge=").append(codeChallenge);
+            params.add("code_challenge_method", "S256");
+            params.add("code_challenge", codeChallenge);
             clientSession.setCodeVerifier(codeVerifier);
         }
 
         if (oauthConfig.isFormPost()) {
-            authorizationUrl.append("&response_mode=form_post");
+            params.add("response_mode", "form_post");
         }
 
-        return authorizationUrl.toString();
+        return authorizationUrl.queryParams(params).toUriString();
     }
 
     public TokenResponse requestToken(String authorizationCode) {
@@ -101,8 +95,7 @@ public class ClientAppService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.add("Authorization",
-                "Basic " + OauthUtil.encodeToBasicClientCredential(clientConfig.getClientId(), clientConfig.getClientSecret()));
+        headers.setBasicAuth(clientConfig.getClientId(), clientConfig.getClientSecret());
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
         params.add("code", authorizationCode);
@@ -172,8 +165,7 @@ public class ClientAppService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.add("Authorization",
-                "Basic " + OauthUtil.encodeToBasicClientCredential(clientConfig.getClientId(), clientConfig.getClientSecret()));
+        headers.setBasicAuth(clientConfig.getClientId(), clientConfig.getClientSecret());
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
         params.add("grant_type", "refresh_token");
@@ -200,8 +192,7 @@ public class ClientAppService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.add("Authorization",
-                "Basic " + OauthUtil.encodeToBasicClientCredential(clientConfig.getClientId(), clientConfig.getClientSecret()));
+        headers.setBasicAuth(clientConfig.getClientId(), clientConfig.getClientSecret());
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
         params.add("token", refreshToken);

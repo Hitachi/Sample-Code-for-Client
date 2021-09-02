@@ -4,7 +4,6 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Base64;
 
 public class OauthUtil {
     public static String generateCodeVerifier() {
@@ -28,10 +27,5 @@ public class OauthUtil {
         }
         byte[] digestBytes = md.digest();
         return Base64url.encode(digestBytes);
-    }
-
-    public static String encodeToBasicClientCredential(String clientId, String clientSecret) {
-        String clientcredential = clientId + ":" + clientSecret;
-        return Base64.getEncoder().encodeToString(clientcredential.getBytes());
     }
 }
