@@ -10,6 +10,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import sample.clientapp.config.ClientAppConfiguration;
+import sample.clientapp.config.OauthConfiguration;
+import sample.clientapp.jwt.AccessToken;
+import sample.clientapp.jwt.RefreshToken;
+import sample.clientapp.service.ClientAppService;
+
 @Controller
 public class ClientAppController {
 

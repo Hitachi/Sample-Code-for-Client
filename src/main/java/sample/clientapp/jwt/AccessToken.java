@@ -1,4 +1,4 @@
-package sample.clientapp;
+package sample.clientapp.jwt;
 
 import java.util.Arrays;
 import java.util.List;

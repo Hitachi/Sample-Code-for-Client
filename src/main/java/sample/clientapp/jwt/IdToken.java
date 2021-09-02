@@ -1,4 +1,4 @@
-package sample.clientapp;
+package sample.clientapp.jwt;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

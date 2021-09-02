@@ -1,4 +1,4 @@
-package sample.clientapp;
+package sample.clientapp.config;
 
 import javax.net.ssl.SSLContext;
 

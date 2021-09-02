@@ -1,15 +1,11 @@
-package sample.clientapp;
+package sample.clientapp.service;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +21,15 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import sample.clientapp.ClientSession;
+import sample.clientapp.TokenResponse;
+import sample.clientapp.config.ClientAppConfiguration;
+import sample.clientapp.config.OauthConfiguration;
+import sample.clientapp.jwt.IdToken;
+import sample.clientapp.jwt.JsonWebToken;
+import sample.clientapp.util.JsonUtil;
+import sample.clientapp.util.OauthUtil;
 
 @Service
 public class ClientAppService {
@@ -249,7 +254,7 @@ public class ClientAppService {
         if (req.hasBody()) {
             message.put("body", req.getBody());
         }
-        logger.debug("ReqeustType=\"" + msg + "\" RequestInfo=" + writeJsonString(message, false));
+        logger.debug("ReqeustType=\"" + msg + "\" RequestInfo=" + JsonUtil.marshal(message, false));
         return;
     }
 
@@ -258,7 +263,7 @@ public class ClientAppService {
         message.put("status", resp.getStatusCode().toString());
         message.put("headers", resp.getHeaders());
         message.put("body", resp.getBody());
-        logger.debug("ResponseType=\"" + responseType + "\" ResponseInfo=" + writeJsonString(message, false));
+        logger.debug("ResponseType=\"" + responseType + "\" ResponseInfo=" + JsonUtil.marshal(message, false));
         return;
     }
 
@@ -267,18 +272,8 @@ public class ClientAppService {
         message.put("status", e.getStatusCode().toString());
         message.put("headers", e.getResponseHeaders());
         message.put("body", e.getResponseBodyAsString());
-        logger.error("ErrorType=\"" + errorType + "\" ResponseInfo=" + writeJsonString(message, false));
+        logger.error("ErrorType=\"" + errorType + "\" ResponseInfo=" + JsonUtil.marshal(message, false));
 
     }
 
-    private String writeJsonString(Object obj, boolean indent) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        try {
-            return mapper.writeValueAsString(obj);
-        } catch (IOException e) {
-            logger.error("unable to deserialize", e);
-        }
-        return "";
-    }
 }

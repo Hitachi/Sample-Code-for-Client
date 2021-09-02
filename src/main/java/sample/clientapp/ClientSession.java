@@ -4,6 +4,11 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 
+import sample.clientapp.jwt.AccessToken;
+import sample.clientapp.jwt.IdToken;
+import sample.clientapp.jwt.JsonWebToken;
+import sample.clientapp.jwt.RefreshToken;
+
 @Component
 @Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class ClientSession {

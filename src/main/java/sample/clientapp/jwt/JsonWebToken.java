@@ -1,10 +1,13 @@
-package sample.clientapp;
+package sample.clientapp.jwt;
 
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
+import sample.clientapp.util.Base64url;
+import sample.clientapp.util.JsonUtil;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class JsonWebToken {
@@ -18,15 +21,15 @@ public class JsonWebToken {
     private String jti;
 
     @JsonIgnore
-    private byte[] payload;
+    byte[] payload;
     @JsonIgnore
-    private String payloadString;
+    String payloadString;
     @JsonIgnore
-    private byte[] signature;
+    byte[] signature;
     @JsonIgnore
-    private Header header;
+    Header header;
     @JsonIgnore
-    private String tokenString;
+    String tokenString;
 
     public static <T extends JsonWebToken> T parse(String str, Class<T> clazz) {
         if (str == null)
@@ -35,11 +38,11 @@ public class JsonWebToken {
         String[] parts = str.split("\\.");
         if (parts.length < 2 || parts.length > 3)
             return null;
-        T jwt = OauthUtil.readJsonContent(OauthUtil.decodeFromBase64Url(parts[1]), clazz);
-        jwt.setPayload(OauthUtil.decodeFromBase64Url(parts[1]));
-        jwt.setHeader(OauthUtil.readJsonContent(OauthUtil.decodeFromBase64Url(parts[0]), Header.class));
-        jwt.setSignature(OauthUtil.decodeFromBase64Url(parts[2]));
-        jwt.setTokenString(str);
+        T jwt = JsonUtil.unmarshal(Base64url.decode(parts[1]), clazz);
+        jwt.payload = Base64url.decode(parts[1]);
+        jwt.header = JsonUtil.unmarshal(Base64url.decode(parts[0]), Header.class);
+        jwt.signature = Base64url.decode(parts[2]);
+        jwt.tokenString = str;
         return jwt;
     }
 
@@ -48,8 +51,8 @@ public class JsonWebToken {
     }
 
     public String getPayloadJSON() {
-        Object obj = OauthUtil.readJsonContent(this.payload, Object.class);
-        return OauthUtil.writeJsonString(obj);
+        Object obj = JsonUtil.unmarshal(this.payload, Object.class);
+        return JsonUtil.marshal(obj);
     }
 
     public void setPayload(byte[] payload) {
