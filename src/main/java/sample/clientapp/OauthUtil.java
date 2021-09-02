@@ -69,9 +69,7 @@ public class OauthUtil {
         return encoded;
     }
 
-    public static byte[] decodeFromBase64Url(String encoded) {
-        String[] parts = encoded.split("\\.");
-        String encodedContent = parts[1];
+    public static byte[] decodeFromBase64Url(String encodedContent) {
 
         encodedContent = encodedContent.replace('-', '+');
         encodedContent = encodedContent.replace('_', '/');

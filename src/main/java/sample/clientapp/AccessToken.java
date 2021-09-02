@@ -7,17 +7,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class AccessToken {
-    private long exp;
+public class AccessToken extends JsonWebToken {
     private String scope;
-
-    public long getExp() {
-        return exp;
-    }
-
-    public void setExp(long value) {
-        exp = value;
-    }
 
     public String getScope() {
         return scope;

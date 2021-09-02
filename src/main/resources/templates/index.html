@@ -21,10 +21,11 @@
                     <form method="POST">
                         <div class="form-group">
                             <label for="scope">scope</label>
-                            <input id="scope" type="text" class="form-control" name="scope" th:value="${scope}">
+                            <input id="scope" type="text" class="form-control" name="scope"
+                                th:value="${@clientSession?.getScope()}">
                         </div>
                         <div class="form-group">
-                            <input type="submit" class="btn btn-primary" value="Get Token" th:formaction="@{/auth}"/>
+                            <input type="submit" class="btn btn-primary" value="Get Token" th:formaction="@{/auth}" />
 
                             <a class="btn btn-success" th:href="@{/refresh}">Refresh Token</a>
                             <a class="btn btn-secondary" th:href="@{/revoke}"> Revoke Token</a>
@@ -42,17 +43,20 @@
                         </tr>
                         <tr>
                             <td>Token</td>
-                            <td th:text="${accessTokenString}"></td>
-                            <td th:text="${refreshTokenString}"></td>
+                            <td style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 250px;"
+                                th:text="${@clientSession?.getAccessToken()?.tokenString}"></td>
+                            <td style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 250px;"
+                                th:text="${@clientSession?.getRefreshToken()?.tokenString}"></td>
                         </tr>
                         <tr>
                             <td>exp</td>
-                            <td th:text="${accessTokenExp}"></td>
-                            <td th:text="${refreshTokenExp}"></td>
+                            <td th:text="${@clientSession?.getAccessToken()?.getExpDate()}">
+                            </td>
+                            <td th:text="${@clientSession?.getRefreshToken()?.getExpDate()}"></td>
                         </tr>
                         <tr>
                             <td>scope</td>
-                            <td th:text="${accessTokenScope}"></td>
+                            <td th:text="${@clientSession?.getAccessToken()?.getScope()}"></td>
                             <td>---</td>
                         </tr>
                     </table>

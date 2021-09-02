@@ -17,21 +17,22 @@
         <div class="container">
             <p class="h3">Tokens</p>
             <p class="h4">AccessToken</p>
-            <pre class="text-break text-wrap" th:text="${accessTokenString}"></pre>
+            <pre class="text-break text-wrap" th:text="${@clientSession?.getAccessToken()?.tokenString}">
+                </pre>
             <p class="h4">RefreshToken</p>
-            <pre class="text-break text-wrap" th:text="${refreshTokenString}"></pre>
+            <pre class="text-break text-wrap" th:text="${@clientSession?.getRefreshToken()?.tokenString}"></pre>
             <p class="h4">IDToken</p>
-            <pre class="text-break text-wrap" th:text="${IdTokenString}"></pre>
+            <pre class="text-break text-wrap" th:text="${@clientSession?.getIdToken()?.tokenString}"></pre>
         </div>
         <div class="container">
 
             <p class="h3">Decoded Tokens</p>
             <p class="h4">Access Token</p>
-            <pre class="border" th:text="${decodedAccessTokenString}"></pre>
+            <pre class="border" th:text="${@clientSession?.getAccessToken()?.getPayloadJSON()}"></pre>
             <p class="h4">Refresh Token</p>
-            <pre class="border" th:text="${decodedRefreshTokenString}"></pre>
+            <pre class="border" th:text="${@clientSession?.getRefreshToken()?.getPayloadJSON()}"></pre>
             <p class="h4">IDToken</p>
-            <pre class="border" th:text="${decodedIDTokenString}"></pre>
+            <pre class="border" th:text="${@clientSession?.getIdToken()?.getPayloadJSON()}"></pre>
         </div>
 
     </div>

@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.servlet.http.HttpSession;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -40,10 +38,10 @@ public class ClientAppService {
     OauthConfiguration oauthConfig;
 
     @Autowired
-    HttpSession session;
+    RestTemplate restTemplate;
 
     @Autowired
-    RestTemplate restTemplate;
+    ClientSession clientSession;
 
     public String getAuthorizationUrl(String scope) {
         StringBuilder authorizationUrl = new StringBuilder();
@@ -68,21 +66,21 @@ public class ClientAppService {
 
         if (oauthConfig.isState()) {
             String state = UUID.randomUUID().toString();
-            session.setAttribute("state", state);
+            clientSession.setState(state);
             authorizationUrl.append("&state=").append(state);
         }
 
         if (oauthConfig.isNonce()) {
             String nonce = UUID.randomUUID().toString();
-            session.setAttribute("nonce", nonce);
+            clientSession.setNonce(nonce);
             authorizationUrl.append("&nonce=").append(nonce);
         }
 
         if (oauthConfig.isPkce()) {
             String codeVerifier = OauthUtil.generateCodeVerifier();
-            session.setAttribute("codeVerifier", codeVerifier);
             String codeChallenge = OauthUtil.generateCodeChallenge(codeVerifier);
             authorizationUrl.append("&code_challenge_method=S256&code_challenge=").append(codeChallenge);
+            clientSession.setCodeVerifier(codeVerifier);
         }
 
         if (oauthConfig.isFormPost()) {
@@ -107,7 +105,8 @@ public class ClientAppService {
         params.add("redirect_uri", generateRedirectUri());
 
         if (oauthConfig.isPkce()) {
-            params.add("code_verifier", (String) session.getAttribute("codeVerifier"));
+
+            params.add("code_verifier", clientSession.getCodeVerifier());
         }
 
         RequestEntity<?> req = new RequestEntity<>(params, headers, HttpMethod.POST, URI.create(tokenRequestUrl.toString()));
@@ -124,6 +123,42 @@ public class ClientAppService {
         }
 
         return token;
+    }
+
+    public String processAuthorizationCodeGrant(String code, String state) {
+        // check state before token request
+        if (oauthConfig.isState()) {
+            if (state == null || !state.equals(clientSession.getState())) {
+                // state check failure. Write error handling here.
+                logger.error("state check NG");
+                return "gettoken";
+            } else {
+                logger.debug("state check OK");
+                clientSession.setState(null);
+            }
+        }
+
+        TokenResponse token = requestToken(code);
+        if (token == null) {
+            return "gettoken";
+        }
+
+        // check nonce after ID token is obtained
+        if (oauthConfig.isNonce() && token.getIdToken() != null) {
+            IdToken idToken = JsonWebToken.parse(token.getIdToken(), IdToken.class);
+            if (idToken.getNonce() == null || !idToken.getNonce().equals(clientSession.getNonce())) {
+                // nonce check failure. Write error handling here.
+                logger.error("nonce check NG\n");
+                return "gettoken";
+            } else {
+                logger.debug("nonce check OK\n");
+                clientSession.setNonce(null);
+            }
+        }
+
+        clientSession.setTokensFromTokenResponse(token);
+
+        return "gettoken";
     }
 
     public TokenResponse refreshToken(String refreshToken) {
